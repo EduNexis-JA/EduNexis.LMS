@@ -1,0 +1,606 @@
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,36 @@
++{
++  "name": "edunexis-starter",
++  "version": "0.1.0",
++  "private": true,
++  "scripts": {
++    "dev": "next dev -p 3000",
++    "build": "next build",
++    "start": "next start -p 3000",
++    "lint": "next lint"
++  },
++  "dependencies": {
++    "@supabase/supabase-js": "^2.0.0",
++    "axios": "^1.4.0",
++    "react-player": "^2.12.0",
++    "stripe": "^12.0.0",
++    "next": "14.4.0",
++    "react": "18.2.0",
++    "react-dom": "18.2.0"
++  },
++  "devDependencies": {
++    "autoprefixer": "^10.4.14",
++    "postcss": "^8.4.24",
++    "tailwindcss": "^3.5.4",
++    "typescript": "^5.4.2"
++  }
++}
+diff --git a/tsconfig.json b/tsconfig.json
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/tsconfig.json
+@@ -0,0 +1,22 @@
++{
++  "compilerOptions": {
++    "target": "ES2020",
++    "lib": ["DOM", "ES2020"],
++    "allowJs": false,
++    "skipLibCheck": true,
++    "strict": true,
++    "forceConsistentCasingInFileNames": true,
++    "module": "ESNext",
++    "moduleResolution": "Node",
++    "esModuleInterop": true,
++    "jsx": "preserve",
++    "resolveJsonModule": true,
++    "isolatedModules": true,
++    "noEmit": true
++  },
++  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
++  "exclude": ["node_modules"]
++}
+diff --git a/next.config.js b/next.config.js
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/next.config.js
+@@ -0,0 +1,6 @@
++/** @type {import('next').NextConfig} */
++const nextConfig = {
++  reactStrictMode: true
++};
++module.exports = nextConfig;
++
+diff --git a/tailwind.config.js b/tailwind.config.js
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/tailwind.config.js
+@@ -0,0 +1,6 @@
++module.exports = {
++  content: ["./pages/**/*.{js,ts,jsx,tsx}", "./components/**/*.{js,ts,jsx,tsx}"],
++  theme: { extend: {} },
++  plugins: []
++};
++
+diff --git a/postcss.config.js b/postcss.config.js
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/postcss.config.js
+@@ -0,0 +1,8 @@
++module.exports = {
++  plugins: {
++    tailwindcss: {},
++    autoprefixer: {}
++  }
++};
++
+diff --git a/styles/globals.css b/styles/globals.css
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/styles/globals.css
+@@ -0,0 +1,25 @@
++@tailwind base;
++@tailwind components;
++@tailwind utilities;
++
++html, body, #__next {
++  height: 100%;
++}
++body {
++  @apply bg-gray-50 text-gray-800;
++  margin: 0;
++  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
++}
++.container {
++  max-width: 960px;
++  margin-left: auto;
++  margin-right: auto;
++  padding-left: 1rem;
++  padding-right: 1rem;
++}
++
+diff --git a/lib/supabaseClient.ts b/lib/supabaseClient.ts
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/lib/supabaseClient.ts
+@@ -0,0 +1,17 @@
++import { createClient } from '@supabase/supabase-js';
++
++const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
++const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
++
++export const supabase = createClient(supabaseUrl, supabaseAnonKey);
++
++// Admin / server-side client (use only in server runtime)
++export const supabaseAdmin = createClient(
++  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
++  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
++);
++
+diff --git a/lib/stripe.ts b/lib/stripe.ts
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/lib/stripe.ts
+@@ -0,0 +1,5 @@
++import Stripe from "stripe";
++
++const stripeSecret = process.env.STRIPE_SECRET_KEY || "";
++export const stripe = new Stripe(stripeSecret, { apiVersion: "2024-11-13" });
++
+diff --git a/components/CourseCard.tsx b/components/CourseCard.tsx
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/components/CourseCard.tsx
+@@ -0,0 +1,34 @@
++import Link from "next/link";
++
++type Props = {
++  course: {
++    id: string;
++    title: string;
++    description: string | null;
++    price_cents: number | null;
++  };
++};
++
++export default function CourseCard({ course }: Props) {
++  return (
++    <div className="border rounded-lg p-4 bg-white shadow-sm">
++      <h3 className="text-lg font-semibold">{course.title}</h3>
++      <p className="text-sm text-gray-600 mt-2">{course.description}</p>
++      <div className="mt-4 flex items-center justify-between">
++        <div className="text-sm font-medium">
++          {course.price_cents ? `$${(course.price_cents / 100).toFixed(2)}` : "Free"}
++        </div>
++        <Link href={`/courses/${course.id}`}>
++          <a className="px-3 py-2 bg-blue-600 text-white rounded">View</a>
++        </Link>
++      </div>
++    </div>
++  );
++}
++
+diff --git a/components/LessonPlayer.tsx b/components/LessonPlayer.tsx
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/components/LessonPlayer.tsx
+@@ -0,0 +1,16 @@
++import React from "react";
++import ReactPlayer from "react-player";
++
++type Props = {
++  youtubeUrl: string;
++};
++
++export default function LessonPlayer({ youtubeUrl }: Props) {
++  return (
++    <div className="w-full aspect-video bg-black">
++      <ReactPlayer url={youtubeUrl} width="100%" height="100%" controls />
++    </div>
++  );
++}
++
+diff --git a/pages/_app.tsx b/pages/_app.tsx
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/pages/_app.tsx
+@@ -0,0 +1,6 @@
++import type { AppProps } from "next/app";
++import "../styles/globals.css";
++
++export default function App({ Component, pageProps }: AppProps) {
++  return <Component {...pageProps} />;
++}
++
+diff --git a/pages/index.tsx b/pages/index.tsx
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/pages/index.tsx
+@@ -0,0 +1,34 @@
++import { supabase } from "../lib/supabaseClient";
++import CourseCard from "../components/CourseCard";
++
++export default function Home({ courses }: any) {
++  return (
++    <main className="container py-8">
++      <header className="mb-6">
++        <h1 className="text-2xl font-bold">EduNexis — Courses</h1>
++        <p className="text-gray-600">Self-paced courses with Stripe Checkout + YouTube lessons</p>
++      </header>
++
++      <section className="grid gap-4 grid-cols-1 md:grid-cols-2">
++        {courses.length === 0 && <div>No courses yet. Create one in Supabase.</div>}
++        {courses.map((c: any) => <CourseCard key={c.id} course={c} />)}
++      </section>
++    </main>
++  );
++}
++
++export async function getServerSideProps() {
++  const { data } = await supabase.from("courses").select("*").order("created_at", { ascending: false });
++  return { props: { courses: data || [] } };
++}
++
+diff --git a/pages/courses/[id].tsx b/pages/courses/[id].tsx
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/pages/courses/[id].tsx
+@@ -0,0 +1,66 @@
++import { useRouter } from "next/router";
++import { supabase } from "../../lib/supabaseClient";
++import LessonPlayer from "../../components/LessonPlayer";
++import axios from "axios";
++
++export default function CoursePage({ course, lessons }: any) {
++  const router = useRouter();
++  if (router.isFallback) return <div>Loading...</div>;
++
++  async function handleBuy() {
++    try {
++      const res = await axios.post("/api/create-checkout-session", { courseId: course.id });
++      const { sessionUrl } = res.data;
++      window.location.href = sessionUrl;
++    } catch (err) {
++      console.error(err);
++      alert("Could not create checkout session");
++    }
++  }
++
++  return (
++    <main className="container py-8">
++      <h1 className="text-2xl font-bold">{course.title}</h1>
++      <p className="text-gray-600 mt-2">{course.description}</p>
++
++      <div className="mt-6">
++        <button onClick={handleBuy} className="px-4 py-2 bg-green-600 text-white rounded">
++          {course.price_cents ? `Buy for $${(course.price_cents / 100).toFixed(2)}` : "Enroll (Free)"}
++        </button>
++      </div>
++
++      <section className="mt-8">
++        <h2 className="text-xl font-semibold mb-4">Lessons</h2>
++        {lessons.map((l: any) => (
++          <div key={l.id} className="mb-6">
++            <h3 className="font-medium">{l.title}</h3>
++            {l.youtube_url ? <div className="mt-2"><LessonPlayer youtubeUrl={l.youtube_url} /></div> : <p>No content</p>}
++          </div>
++        ))}
++      </section>
++    </main>
++  );
++}
++
++export async function getServerSideProps(context: any) {
++  const { id } = context.params;
++  const { data: courses } = await supabase.from("courses").select("*").eq("id", id).single();
++  const { data: lessons } = await supabase.from("lessons").select("*").eq("course_id", id).order("position", { ascending: true });
++
++  if (!courses) return { notFound: true };
++  return { props: { course: courses, lessons: lessons || [] } };
++}
++
+diff --git a/pages/api/create-checkout-session.ts b/pages/api/create-checkout-session.ts
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/pages/api/create-checkout-session.ts
+@@ -0,0 +1,68 @@
++import type { NextApiRequest, NextApiResponse } from "next";
++import { stripe } from "../../lib/stripe";
++import { supabaseAdmin } from "../../lib/supabaseClient";
++
++export default async function handler(req: NextApiRequest, res: NextApiResponse) {
++  if (req.method !== "POST") return res.status(405).end();
++
++  const { courseId } = req.body;
++  if (!courseId) return res.status(400).json({ error: "Missing courseId" });
++
++  // Fetch course and price
++  const { data: course } = await supabaseAdmin.from("courses").select("*").eq("id", courseId).single();
++  if (!course) return res.status(404).json({ error: "Course not found" });
++
++  try {
++    const price = course.price_cents || 0;
++    // For free courses, create an enrollment directly (skip Stripe)
++    if (price === 0) {
++      // NOTE: frontend must call authenticated endpoint in real app; for starter, we return convenient message
++      return res.status(200).json({ message: "Free course — implement auth enrollment on client" });
++    }
++
++    // Create Stripe Checkout session
++    const session = await stripe.checkout.sessions.create({
++      payment_method_types: ["card"],
++      mode: "payment",
++      line_items: [
++        {
++          price_data: {
++            currency: "usd",
++            product_data: { name: course.title, description: course.description || "" },
++            unit_amount: price
++          },
++          quantity: 1
++        }
++      ],
++      // Provide a success/cancel URL (Vercel preview will differ)
++      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/?checkout=success`,
++      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/?checkout=cancel`,
++      metadata: { course_id: courseId }
++    });
++
++    res.status(200).json({ sessionUrl: session.url });
++  } catch (err: any) {
++    console.error(err);
++    res.status(500).json({ error: "Stripe session creation failed" });
++  }
++}
++
+diff --git a/pages/api/webhooks/stripe.ts b/pages/api/webhooks/stripe.ts
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/pages/api/webhooks/stripe.ts
+@@ -0,0 +1,79 @@
++import { NextApiRequest, NextApiResponse } from "next";
++import { stripe } from "../../lib/stripe";
++import { supabaseAdmin } from "../../lib/supabaseClient";
++
++export const config = {
++  api: {
++    bodyParser: false
++  }
++};
++
++import getRawBody from "raw-body";
++
++export default async function handler(req: NextApiRequest, res: NextApiResponse) {
++  const sig = req.headers["stripe-signature"] as string | undefined;
++  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
++
++  const buf = await getRawBody(req);
++  let event;
++  try {
++    event = stripe.webhooks.constructEvent(buf.toString(), sig || "", webhookSecret);
++  } catch (err: any) {
++    console.error("Webhook signature verification failed.", err.message);
++    return res.status(400).send(`Webhook Error: ${err.message}`);
++  }
++
++  if (event.type === "checkout.session.completed") {
++    const session = event.data.object as any;
++    const courseId = session.metadata?.course_id;
++    const customerEmail = session.customer_details?.email || null;
++    const amount_total = session.amount_total || 0;
++
++    // Create or find user by email (simple flow)
++    try {
++      let userId = null;
++      if (customerEmail) {
++        const { data: users } = await supabaseAdmin.from("users").select("*").eq("email", customerEmail).limit(1);
++        if (users && users.length > 0) {
++          userId = users[0].id;
++        } else {
++          const { data: newUser } = await supabaseAdmin.from("users").insert([{ email: customerEmail, role: "student" }]).select().single();
++          userId = newUser.id;
++        }
++      }
++
++      // Create enrollment
++      await supabaseAdmin.from("enrollments").insert([
++        {
++          user_id: userId,
++          course_id: courseId,
++          status: "active",
++          purchased_at: new Date().toISOString(),
++          price_cents: amount_total
++        }
++      ]);
++
++      // Create payment record
++      await supabaseAdmin.from("payments").insert([
++        {
++          enrollment_id: null,
++          stripe_payment_id: session.payment_intent || session.id,
++          amount_cents: amount_total,
++          status: "succeeded",
++          created_at: new Date().toISOString()
++        }
++      ]);
++    } catch (err) {
++      console.error("Error writing to supabase:", err);
++    }
++  }
++
++  res.json({ received: true });
++}
++
+diff --git a/db/schema.sql b/db/schema.sql
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/db/schema.sql
+@@ -0,0 +1,79 @@
++-- Supabase starter schema for EduNexis
++-- Run this in Supabase SQL editor (or via migrations)
++
++-- Simple users table (Supabase Auth exists; this is optional for profile data)
++create table if not exists users (
++  id uuid primary key default gen_random_uuid(),
++  email text unique,
++  full_name text,
++  role text default 'student',
++  created_at timestamptz default now()
++);
++
++create table if not exists courses (
++  id uuid primary key default gen_random_uuid(),
++  title text not null,
++  slug text unique,
++  description text,
++  price_cents int default 0,
++  instructor_id uuid references users(id) on delete set null,
++  published boolean default false,
++  created_at timestamptz default now()
++);
++
++create table if not exists lessons (
++  id uuid primary key default gen_random_uuid(),
++  course_id uuid references courses(id) on delete cascade,
++  title text not null,
++  youtube_url text,
++  position int default 0,
++  created_at timestamptz default now()
++);
++
++create table if not exists enrollments (
++  id uuid primary key default gen_random_uuid(),
++  user_id uuid references users(id) on delete cascade,
++  course_id uuid references courses(id) on delete cascade,
++  status text default 'active',
++  purchased_at timestamptz,
++  access_expires_at timestamptz,
++  price_cents int,
++  created_at timestamptz default now()
++);
++
++create table if not exists progress (
++  id uuid primary key default gen_random_uuid(),
++  user_id uuid references users(id) on delete cascade,
++  course_id uuid references courses(id) on delete cascade,
++  lesson_id uuid references lessons(id) on delete cascade,
++  completed_at timestamptz
++);
++
++create table if not exists payments (
++  id uuid primary key default gen_random_uuid(),
++  enrollment_id uuid references enrollments(id) on delete set null,
++  stripe_payment_id text,
++  amount_cents int,
++  status text,
++  created_at timestamptz default now()
++);
++
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,141 @@
++# EduNexis Starter
++
++Minimal Next.js + TypeScript starter for EduNexis using Supabase and Stripe Checkout.
++
++## Features
++- Next.js frontend with Tailwind CSS
++- Supabase for Auth + Postgres + Storage
++- Stripe Checkout (hosted) for payments
++- YouTube lesson playback
++- Webhook handler to record enrollments/payments
++
++## Quick start (local)
++
++1. Clone:
++   git clone <your-repo-url>
++   cd edunexis-starter
++   npm install
++
++2. Create a Supabase project:
++   - Note your SUPABASE_URL and SUPABASE_ANON_KEY
++   - Create a "Service Role" key (SUPABASE_SERVICE_ROLE_KEY)
++   - Run the SQL in `db/schema.sql` in the Supabase SQL editor.
++
++3. Create a Stripe account (test mode) and get:
++   - STRIPE_SECRET_KEY
++   - STRIPE_PUBLISHABLE_KEY
++   - STRIPE_WEBHOOK_SECRET (will be generated when you run stripe listen)
++
++4. Create a .env.local file using `.env.example` and fill values:
++   - NEXT_PUBLIC_SUPABASE_URL
++   - NEXT_PUBLIC_SUPABASE_ANON_KEY
++   - SUPABASE_SERVICE_ROLE_KEY
++   - STRIPE_SECRET_KEY
++   - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
++   - STRIPE_WEBHOOK_SECRET
++   - NEXT_PUBLIC_BASE_URL (e.g., http://localhost:3000)
++
++5. Start app:
++   npm run dev
++   Open http://localhost:3000
++
++6. Test Stripe webhooks (local):
++   Install Stripe CLI: https://stripe.com/docs/stripe-cli
++   stripe login
++   stripe listen --forward-to localhost:3000/api/webhooks/stripe
++   Copy the webhook signing secret into .env.local as STRIPE_WEBHOOK_SECRET
++
++## Deploy
++- Push to GitHub and connect the repo to Vercel.
++- Set the same env vars in Vercel (including SUPABASE_SERVICE_ROLE_KEY and STRIPE_*).
++- Deploy to production.
++
++## Notes & next tasks
++- Authentication flows: this scaffold assumes basic Supabase Auth. You'll want protected pages and server-side checks for enrollments.
++- Enrollment flow: free-course enrollments currently need client-side auth flow to create enrollment. Paid flow records an enrollment on webhook; improve by linking checkout to authenticated users.
++- Deadline handling: add course.deadline_days and set enrollment.access_expires_at at purchase time.
++- Improve UX, add instructor admin pages, and secure server endpoints.
++
++If you want, I can:
++- Push this scaffold to a GitHub repo for you (tell me the repo name & owner).
++- Extend the scaffold to implement authenticated enrollment flows (so the webhook links to the correct user).
++- Add a simple instructor dashboard (create/edit courses and lessons).
++
++Tell me which of those you'd like next.
++
+diff --git a/.env.example b/.env.example
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/.env.example
+@@ -0,0 +1,8 @@
++# Copy to .env.local and fill values
++NEXT_PUBLIC_SUPABASE_URL=
++NEXT_PUBLIC_SUPABASE_ANON_KEY=
++SUPABASE_SERVICE_ROLE_KEY=
++STRIPE_SECRET_KEY=
++NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
++STRIPE_WEBHOOK_SECRET=
++NEXT_PUBLIC_BASE_URL=http://localhost:3000
++
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,8 @@
++node_modules/
++.next/
++.env.local
++.env
++dist/
++coverage/
++
