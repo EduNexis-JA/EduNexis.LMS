@@ -32,8 +32,8 @@ export default function Header() {
             </div>
           ) : (
             <div>
-              <Link href="/signin"><a className="mr-4 text-sm">Sign in</a></Link>
-              <Link href="/signup"><a className="px-3 py-1 bg-blue-600 text-white rounded">Sign up</a></Link>
+              <Link href="/signin" className="mr-4 text-sm">Sign in</Link>
+              <Link href="/signup" className="px-3 py-1 bg-blue-600 text-white rounded">Sign up</Link>
             </div>
           )}
         </nav>

@@ -18,9 +18,7 @@ export default function CourseCard({ course }: Props) {
         <div className="text-sm font-medium">
           {course.price_cents ? `$${(course.price_cents / 100).toFixed(2)}` : "Free"}
         </div>
-        <Link href={`/courses/${course.id}`}>
-          <a className="px-3 py-2 bg-blue-600 text-white rounded">View</a>
-        </Link>
+        <Link href={`/courses/${course.id}`} className="px-3 py-2 bg-blue-600 text-white rounded">View</Link>
       </div>
     </div>
   );
