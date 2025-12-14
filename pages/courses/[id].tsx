@@ -24,12 +24,23 @@ export default function CoursePage({ course, lessons }: any) {
 
   async function handleBuy() {
     try {
-      // Require login for paid checkout to link purchase to user
       if (!user) {
-        alert("Please sign in to purchase this course.");
+        alert("Please sign in to enroll in this course.");
         return;
       }
 
+      // Free course: call enroll endpoint
+      if (!course.price_cents || course.price_cents === 0) {
+        const r = await axios.post("/api/enroll", { courseId: course.id, userId: user.id });
+        if (r.data?.ok) {
+          alert("Enrolled successfully");
+          return;
+        }
+        alert("Could not enroll");
+        return;
+      }
+
+      // Paid course: create Stripe checkout session
       const payload = {
         courseId: course.id,
         userId: user.id,
