@@ -2,16 +2,47 @@ import { useRouter } from "next/router";
 import { supabase } from "../../lib/supabaseClient";
 import LessonPlayer from "../../components/LessonPlayer";
 import axios from "axios";
+import { useEffect, useState } from "react";
 
 export default function CoursePage({ course, lessons }: any) {
   const router = useRouter();
   if (router.isFallback) return <div>Loading...</div>;
+  const [user, setUser] = useState<any | null>(null);
+
+  useEffect(() => {
+    // Get currently logged-in user (if any)
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user ?? null);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
 
   async function handleBuy() {
     try {
-      const res = await axios.post("/api/create-checkout-session", { courseId: course.id });
+      // Require login for paid checkout to link purchase to user
+      if (!user) {
+        alert("Please sign in to purchase this course.");
+        return;
+      }
+
+      const payload = {
+        courseId: course.id,
+        userId: user.id,
+        userEmail: user.email
+      };
+
+      const res = await axios.post("/api/create-checkout-session", payload);
       const { sessionUrl } = res.data;
-      window.location.href = sessionUrl;
+      if (sessionUrl) {
+        window.location.href = sessionUrl;
+      } else {
+        alert("Checkout session not created.");
+      }
     } catch (err) {
       console.error(err);
       alert("Could not create checkout session");
@@ -44,9 +75,14 @@ export default function CoursePage({ course, lessons }: any) {
 
 export async function getServerSideProps(context: any) {
   const { id } = context.params;
-  const { data: courses } = await supabase.from("courses").select("*").eq("id", id).single();
-  const { data: lessons } = await supabase.from("lessons").select("*").eq("course_id", id).order("position", { ascending: true });
+  try {
+    const { data: course } = await supabase.from("courses").select("*").eq("id", id).single();
+    const { data: lessons } = await supabase.from("lessons").select("*").eq("course_id", id).order("position", { ascending: true });
 
-  if (!courses) return { notFound: true };
-  return { props: { course: courses, lessons: lessons || [] } };
+    if (!course) return { notFound: true };
+    return { props: { course: course, lessons: lessons || [] } };
+  } catch (err) {
+    console.error("Error fetching course or lessons from Supabase:", err);
+    return { props: { course: null, lessons: [] } };
+  }
 }

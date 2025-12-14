@@ -26,23 +26,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as any;
     const courseId = session.metadata?.course_id;
-    const customerEmail = session.customer_details?.email || null;
+    const metadataUserId = session.metadata?.user_id || null;
+    const customerEmail = session.customer_details?.email || session.customer_email || null;
     const amount_total = session.amount_total || 0;
 
-    // Create or find user by email (simple flow)
+    // Prefer linking to metadata.user_id (set at session creation). Fallback to email lookup.
     try {
-      let userId = null;
-      if (customerEmail) {
+      let userId = metadataUserId;
+
+      if (!userId && customerEmail) {
+        // Find or create profile by email
         const { data: users } = await supabaseAdmin.from("users").select("*").eq("email", customerEmail).limit(1);
         if (users && users.length > 0) {
           userId = users[0].id;
         } else {
-          const { data: newUser } = await supabaseAdmin.from("users").insert([{ email: customerEmail, role: "student" }]).select().single();
+          const { data: newUser } = await supabaseAdmin
+            .from("users")
+            .insert([{ email: customerEmail, role: "student" }])
+            .select()
+            .single();
           userId = newUser.id;
         }
       }
 
-      // Create enrollment
+      // Create enrollment (link to found userId if available)
       await supabaseAdmin.from("enrollments").insert([
         {
           user_id: userId,
