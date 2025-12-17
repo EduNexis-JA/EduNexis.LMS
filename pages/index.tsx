@@ -18,6 +18,22 @@ export default function Home({ courses }: any) {
 }
 
 export async function getServerSideProps() {
-  const { data } = await supabase.from("courses").select("*").order("created_at", { ascending: false });
-  return { props: { courses: data || [] } };
+  try {
+    const { data } = await supabase.from("courses").select("*").order("created_at", { ascending: false });
+    // If no Supabase configured or no courses, fallback to demo data
+    if ((!process.env.NEXT_PUBLIC_SUPABASE_URL || !data || data.length === 0)) {
+      const fs = await import("fs/promises");
+      const raw = await fs.readFile("./data/demo.json", "utf8");
+      const demo = JSON.parse(raw);
+      return { props: { courses: demo.courses || [] } };
+    }
+    return { props: { courses: data || [] } };
+  } catch (err) {
+    console.error("Error fetching courses from Supabase:", err);
+    // fallback to demo data
+    const fs = await import("fs/promises");
+    const raw = await fs.readFile("./data/demo.json", "utf8");
+    const demo = JSON.parse(raw);
+    return { props: { courses: demo.courses || [] } };
+  }
 }

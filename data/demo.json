@@ -1,0 +1,24 @@
+{
+  "courses": [
+    {
+      "id": "demo-course-1",
+      "title": "Intro to EduNexis (Demo)",
+      "description": "A complete demo course to explore EduNexis features (Stripe checkout, lessons, progress).",
+      "price_cents": 0,
+      "lessons": [
+        {
+          "id": "lesson-1",
+          "title": "Welcome & Overview",
+          "youtube_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          "position": 1
+        },
+        {
+          "id": "lesson-2",
+          "title": "Course Basics",
+          "youtube_url": "https://www.youtube.com/watch?v=2Z4m4lnjxkY",
+          "position": 2
+        }
+      ]
+    }
+  ]
+}

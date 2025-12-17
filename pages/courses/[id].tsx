@@ -11,10 +11,10 @@ export default function CoursePage({ course, lessons }: any) {
 
   useEffect(() => {
     // Get currently logged-in user (if any)
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user ?? null);
+    supabase.auth.getUser().then((res: any) => {
+      setUser(res?.data?.user ?? null);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setUser(session?.user ?? null);
     });
     return () => {
@@ -90,10 +90,27 @@ export async function getServerSideProps(context: any) {
     const { data: course } = await supabase.from("courses").select("*").eq("id", id).single();
     const { data: lessons } = await supabase.from("lessons").select("*").eq("course_id", id).order("position", { ascending: true });
 
-    if (!course) return { notFound: true };
+    if (!course) {
+      // fallback to demo data when supabase is not configured
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+        const fs = await import("fs/promises");
+        const raw = await fs.readFile("./data/demo.json", "utf8");
+        const demo = JSON.parse(raw);
+        const c = demo.courses.find((x: any) => x.id === id);
+        if (!c) return { notFound: true };
+        return { props: { course: c, lessons: c.lessons || [] } };
+      }
+      return { notFound: true };
+    }
     return { props: { course: course, lessons: lessons || [] } };
   } catch (err) {
     console.error("Error fetching course or lessons from Supabase:", err);
-    return { props: { course: null, lessons: [] } };
+    // fallback to demo data
+    const fs = await import("fs/promises");
+    const raw = await fs.readFile("./data/demo.json", "utf8");
+    const demo = JSON.parse(raw);
+    const c = demo.courses.find((x: any) => x.id === id);
+    if (!c) return { notFound: true };
+    return { props: { course: c, lessons: c.lessons || [] } };
   }
 }
