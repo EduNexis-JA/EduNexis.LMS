@@ -10,15 +10,26 @@ if (supabaseUrl && supabaseAnonKey) {
 } else {
   // Lightweight stub to avoid runtime crashes when env vars are missing. Methods return safe defaults.
   // This keeps the app usable for development without Supabase configured.
+  const createStubQuery = () => ({
+    select: () => createStubQuery(),
+    order: () => createStubQuery(),
+    eq: () => createStubQuery(),
+    insert: () => createStubQuery(),
+    update: () => createStubQuery(),
+    delete: () => createStubQuery(),
+    then: async (resolve: any) => resolve({ data: [], error: null }),
+    single: async () => ({ data: null, error: null })
+  });
+  
   _supabase = {
     auth: {
-      getUser: async () => ({ data: { user: null } }),
-      signInWithPassword: async () => ({ error: new Error('Supabase not configured') }),
-      signUp: async () => ({ error: new Error('Supabase not configured') }),
-      signOut: async () => ({ error: new Error('Supabase not configured') }),
+      getUser: async () => ({ data: { user: null }, error: null }),
+      signInWithPassword: async () => ({ data: null, error: new Error('Supabase not configured') }),
+      signUp: async () => ({ data: null, error: new Error('Supabase not configured') }),
+      signOut: async () => ({ error: null }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
     },
-    from: () => ({ select: async () => ({ data: [] }) })
+    from: () => createStubQuery()
   } as any;
 }
 

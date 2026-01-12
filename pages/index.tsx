@@ -18,12 +18,30 @@ export default function Home({ courses }: any) {
 }
 
 export async function getServerSideProps() {
+  // If Supabase is not configured, use demo data
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    try {
+      const fs = await import("fs/promises");
+      const path = await import("path");
+      const demoPath = path.join(process.cwd(), "data", "demo.json");
+      const raw = await fs.readFile(demoPath, "utf8");
+      const demo = JSON.parse(raw);
+      return { props: { courses: demo.courses || [] } };
+    } catch (err) {
+      console.error("Error loading demo data:", err);
+      return { props: { courses: [] } };
+    }
+  }
+
+  // Try to fetch from Supabase
   try {
     const { data } = await supabase.from("courses").select("*").order("created_at", { ascending: false });
-    // If no Supabase configured or no courses, fallback to demo data
-    if ((!process.env.NEXT_PUBLIC_SUPABASE_URL || !data || data.length === 0)) {
+    // If no courses, fallback to demo data
+    if (!data || data.length === 0) {
       const fs = await import("fs/promises");
-      const raw = await fs.readFile("./data/demo.json", "utf8");
+      const path = await import("path");
+      const demoPath = path.join(process.cwd(), "data", "demo.json");
+      const raw = await fs.readFile(demoPath, "utf8");
       const demo = JSON.parse(raw);
       return { props: { courses: demo.courses || [] } };
     }
@@ -31,9 +49,16 @@ export async function getServerSideProps() {
   } catch (err) {
     console.error("Error fetching courses from Supabase:", err);
     // fallback to demo data
-    const fs = await import("fs/promises");
-    const raw = await fs.readFile("./data/demo.json", "utf8");
-    const demo = JSON.parse(raw);
-    return { props: { courses: demo.courses || [] } };
+    try {
+      const fs = await import("fs/promises");
+      const path = await import("path");
+      const demoPath = path.join(process.cwd(), "data", "demo.json");
+      const raw = await fs.readFile(demoPath, "utf8");
+      const demo = JSON.parse(raw);
+      return { props: { courses: demo.courses || [] } };
+    } catch (demoErr) {
+      console.error("Error loading demo data:", demoErr);
+      return { props: { courses: [] } };
+    }
   }
 }
